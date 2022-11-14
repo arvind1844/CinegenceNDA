@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+{% block content %}
+{% load static %}
+
+<head>
+    <link rel="icon" href="/static/images/CG-logo.png" type="image/x-icon" />
+    <link rel="shortcut icon" type="image/x-icon" href="/static/images/CG-logo.png" />
+    <title>Cinegence</title>
+    <meta charset='utf-8'>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}" type="text/css" media="all">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="page-wrapper  p-t-100 p-b-100 font-poppins">
+        <div class="wrapper wrapper--w680">
+            <div class="card card-4">
+                <div class="card-body">
+                    <div class="contentarea" style="text-align:center; padding-right:200px; font-size: 25px;">
+        <div class="Input">
+            <form method="POST" name="inputForm" id="inputForm" enctype='multipart/form-data'>
+                {% csrf_token %}
+                <div id="camera" class="camera">
+                    <video id="video">Video stream not available.</video>
+                    <button id="startbutton" type="button">Take photo</button>
+                    <input id="webimg" value="" name="src" type="text" style="display: none;">
+                    <canvas id="canvas">
+                    </canvas>
+                </div>
+                <br>
+                <div>
+                    <img id="photo" alt="your image">
+                </div>
+                <br>
+                <div style="color: #0043ff;cursor: pointer;align-items: center;display: block;border: 1px solid rgba(255, 255, 255, 0.7);border-radius: 7px;box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 20%);width: 200px;margin-left: 183px;" onclick="submit()">Submit</div>
+
+            </form>
+        </div>
+        <img src="{{ path }}" alt="The screen capture will appear in this box." hidden>
+    </div>
+</div>
+</div>
+</div>
+</div>
+</body>
+<script>
+    (function () {
+        // The width and height of the captured photo. We will set the
+        // width to the value defined here, but the height will be
+        // calculated based on the aspect ratio of the input stream.
+
+        var width = 320;    // We will scale the photo width to this
+        var height = 0;     // This will be computed based on the input stream
+
+        // |streaming| indicates whether or not we're currently streaming
+        // video from the camera. Obviously, we start at false.
+
+        var streaming = false;
+
+        // The various HTML elements we need to configure or control. These
+        // will be set by the startup() function.
+
+        var video = null;
+        var canvas = null;
+        var photo = null;
+        var startbutton = null;
+
+        function startup() {
+            video = document.getElementById('video');
+            canvas = document.getElementById('canvas');
+            photo = document.getElementById('photo');
+            startbutton = document.getElementById('startbutton');
+
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(function (stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function (err) {
+                    console.log("An error occurred: " + err);
+                });
+
+            video.addEventListener('canplay', function (ev) {
+                if (!streaming) {
+                    height = video.videoHeight / (video.videoWidth / width);
+
+                    // Firefox currently has a bug where the height can't be read from
+                    // the video, so we will make assumptions if this happens.
+
+                    if (isNaN(height)) {
+                        height = width / (4 / 3);
+                    }
+
+                    video.setAttribute('width', width);
+                    video.setAttribute('height', height);
+                    canvas.setAttribute('width', width);
+                    canvas.setAttribute('height', height);
+                    streaming = true;
+                }
+            }, false);
+
+            startbutton.addEventListener('click', function (ev) {
+                takepicture();
+                ev.preventDefault();
+            }, false);
+
+            clearphoto();
+        }
+
+        // Fill the photo with an indication that none has been
+        // captured.
+
+        function clearphoto() {
+            var context = canvas.getContext('2d');
+            context.fillStyle = "#AAA";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            var data = canvas.toDataURL('image/png');
+            photo.setAttribute('src', data);
+        }
+
+        // Capture a photo by fetching the current contents of the video
+        // and drawing it into a canvas, then converting that to a PNG
+        // format data URL. By drawing it on an offscreen canvas and then
+        // drawing that to the screen, we can change its size and/or apply
+        // other changes before drawing it.
+
+        function takepicture() {
+            var context = canvas.getContext('2d');
+            if (width && height) {
+                canvas.width = width;
+                canvas.height = height;
+                context.drawImage(video, 0, 0, width, height);
+                var data = canvas.toDataURL('image/png');
+                // console.log(data)
+                // var blob = dataURItoBlob(data)
+                // // console.log(blob)
+                // let myForm = document.getElementById('inputForm');
+                // var fd = new FormData(myForm)
+                // console.log(fd)
+                // fd.append('image', blob, 'default.png')
+
+                // let request = new XMLHttpRequest();
+                // let id = "{{id}}";
+                // console.log(id)
+                // request.open("POST", "http://127.0.0.1:8000/image_upload_staff/"+id);
+                // request.send(fd);
+                // console.log(fd)
+                photo.setAttribute('src', data);
+            } else {
+                clearphoto();
+            }
+        }
+        // Set up our event listener to run the startup process
+        // once loading is complete.
+        window.addEventListener('load', startup, false);
+
+    })();
+    var submit = function() {
+        let canvas = document.getElementById('canvas');
+            function dataURItoBlob(dataURI) {
+                // convert base64/URLEncoded data component to raw binary data held in a string
+                var byteString;
+                if (dataURI.split(',')[0].indexOf('base64') >= 0)
+                    byteString = atob(dataURI.split(',')[1]);
+                else
+                    byteString = unescape(dataURI.split(',')[1]);
+
+                // separate out the mime component
+                var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+                // write the bytes of the string to a typed array
+                var ia = new Uint8Array(byteString.length);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+
+                return new Blob([ia], { type: mimeString });
+            }
+            var data = canvas.toDataURL('image/png');
+            // console.log(data)
+            var blob = dataURItoBlob(data)
+            // console.log(blob)
+            let myForm = document.getElementById('inputForm');
+            var fd = new FormData(myForm)
+            console.log(fd)
+            fd.append('image', blob, 'client.png')
+
+            let request = new XMLHttpRequest();
+            let id = "{{id}}";
+            console.log(id)
+            request.open("POST", "http://127.0.0.1:8000/image_upload_client/" + id);
+            request.send(fd);
+            console.log(fd);
+            window.location.href = "/pdf_client/"+id
+
+        }
+</script>
+{% endblock %}
+
+</html>
