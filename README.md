@@ -62,15 +62,7 @@ Registration page - Name, Contact, Address, Email , PAN number and  Adhar number
 Webpage to capture real time image 
 A page to submit an NDA. After the submission it will be mailed to whomever is concerned.
 
-To download and run this project, follow these steps:
-$ virtualenv env
-$ env\Scripts\ativate (Windows)
-$ source env/lib/activate (Mac, Linux)
-$ git clone https://github.com/arvind050/NDA-v02.git
-$ pip install -r requirements.txt
-$ python manage.py makemigrations
-$ python manage.py migrate
-$ python manage.py createsuperuser
+
 
 
 
